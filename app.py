@@ -1,26 +1,22 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_wtf import CSRFProtect
+from flask_wtf.csrf import generate_csrf
+import os
+from dotenv import load_dotenv
+from auth.routes import auth
 
-# load .env in development only
-if os.environ.get("FLASK_ENV") == "development":
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-    except ImportError:
-        pass
+load_dotenv()
 
 app = Flask(__name__)
+app.register_blueprint(auth, url_prefix="/auth")
 
-siteName = "SHU Cash Tracker"
+siteName = "SHU Expense Tracker"
 # Set the site name in the app context
 @app.context_processor
 def inject_site_name():
     return dict(siteName=siteName)
 
-secret = os.environ.get("SECRET_KEY")
-if not secret:
-    raise RuntimeError("SECRET_KEY is not set")
-
+secret = os.getenv("SECRET_KEY")
 app.secret_key = secret
 
 csrf = CSRFProtect(app)
@@ -31,7 +27,7 @@ def inject_csrf_token():
 
 @app.route('/')
 def index():
-    return "Hello World!"
+    return render_template('index.html', title="Welcome")
 
 # Run application
 if __name__ == '__main__':
