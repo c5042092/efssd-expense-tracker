@@ -7,7 +7,6 @@ auth = Blueprint("auth", __name__)
 @auth.route("/login", methods=("GET", "POST"))
 def login():
     if request.method == "POST":
-        print({"data": request.form})
         email = request.form['email']
         password = request.form['password']
 
@@ -32,7 +31,7 @@ def register():
 
         if not form.validate():
             flash(category="danger", message="Invalid input")
-            return render_template("auth/register.html", form=form)
+            return render_template("auth/register.html", title="Register", form=form)
         
         first_name = form.first_name.data
         last_name = form.last_name.data
@@ -46,7 +45,7 @@ def register():
             return redirect(url_for("auth.login"))
         else:
             flash(category="danger", message=f"Registration failed: {error}")
-            return render_template("auth/register.html", form=form)
+            return render_template("auth/register.html", title="Register", form=form)
 
     # If the request method is GET
     form = RegisterForm()
