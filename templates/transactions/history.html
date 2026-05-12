@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<section class="container pt-4">
+    <h2 class="fw-bold mb-1">
+        All transactions
+    </h2>
+    <p class="text-secondary mb-0">
+        Browse, filter, and search every entry.
+    </p>
+</section>
+
+<div class="container py-4">
+    <!-- FILTER CARD -->
+    <section class="rounded-4 border p-4 shadow-soft bg-white">
+        <form method="GET">
+            <div class="row g-3">
+                <!-- SEARCH -->
+                <div class="col-12 col-lg">
+                    <div class="position-relative">
+                        <input
+                            type="text"
+                            name="search"
+                            class="form-control py-3 border-0"
+                            placeholder="Search description..."
+                            value="{{ request.args.get('search', '') }}"
+                            style="background: rgba(0,0,0,0.03); border-radius: 1rem;"
+                        />
+                    </div>
+                </div>
+
+                <!-- TYPE FILTER -->
+                <div class="col-12 col-md-4 col-lg-2">
+                    <select
+                        name="type"
+                        class="form-select py-3 border-0"
+                        style="background: rgba(0,0,0,0.03); border-radius: 1rem;"
+                    >
+                        <option value="">All types</option>
+
+                        <option value="income"
+                            {% if request.args.get('type') == 'income' %}selected{% endif %}
+                        >
+                            Income
+                        </option>
+
+                        <option value="expense"
+                            {% if request.args.get('type') == 'expense' %}selected{% endif %}
+                        >
+                            Expenses
+                        </option>
+                    </select>
+                </div>
+
+                <!-- CATEGORY FILTER -->
+                <div class="col-12 col-md-4 col-lg-2">
+                    <select
+                        name="category"
+                        class="form-select py-3 border-0"
+                        style="background: rgba(0,0,0,0.03); border-radius: 1rem;"
+                    >
+                        <option value="">All categories</option>
+
+                        {% for c in categories %}
+                            <option value="{{ c.id }}"
+                                {% if request.args.get('category') == c.id|string %}selected{% endif %}
+                            >
+                                {{ c.icon }} {{ c.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- FILTER BUTTON -->
+                <div class="col-12">
+                    <button class="btn btn-primary rounded-pill px-4 mt-2">
+                        Apply filters
+                    </button>
+                </div>
+
+            </div>
+
+        </form>
+
+        <!-- SUMMARY -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3 mt-4">
+            <span class="text-secondary small">
+                {{ data.total_transactions }} entries
+            </span>
+
+            <div class="d-flex flex-wrap gap-4 small">
+                <span class="text-secondary">
+                    Income:
+                    <strong class="ms-1 text-success">
+                        {{ data.income_total }}
+                    </strong>
+                </span>
+
+                <span class="text-secondary">
+                    Expenses:
+                    <strong class="ms-1 text-danger">
+                        {{ data.expense_total }}
+                    </strong>
+                </span>
+
+                <span class="text-secondary">
+                    Net:
+                    <strong class="ms-1 text-dark">
+                       {{ data.net_total }}
+                    </strong>
+                </span>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- TRANSACTION LIST -->
+    <section class="rounded-4 border p-4 shadow-soft bg-white mt-4">
+
+        {% if data.transactions %}
+
+            {% for t in data.transactions %}
+
+                <div class="transaction-item d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 py-3 {% if not loop.last %}border-bottom{% endif %}">
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- TEXT (ICON REMOVED AREA) -->
+                        <div>
+                            <h6 class="fw-bold mb-1">
+                                {{ t.description }}
+                            </h6>
+
+                            <div class="small text-secondary">
+
+                                {% if t.type == 'income' %}
+                                    Income
+                                {% else %}
+                                    {% for c in categories %}
+                                        {% if c.id == t.category %}
+                                            {{ c.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+
+                                •
+
+                                {{ t.transaction_date }}
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AMOUNT -->
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="fw-bold {% if t.type == 'income' %}text-success{% else %}text-danger{% endif %}">
+
+                            {% if t.type == 'income' %}+{% else %}-{% endif %}
+
+                            {{ CURRENCY_SYMBOLS.get(t.currency, t.currency) }}{{ t.amount }}
+
+                        </span>
+
+                        <form method="POST" action="/transactions/delete/{{ t.id }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button class="btn btn-sm btn-light rounded-pill px-3">
+                                Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="text-center py-5">
+                <h5 class="fw-bold mb-2">No transactions found</h5>
+                <p class="text-secondary mb-0">
+                    Try adjusting your filters or search query.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </section>
+
+    <!-- PAGINATION -->
+    {% if data.total_pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if data.page <= 1 %}disabled{% endif %}">
+                    <a class="page-link"
+                       href="?page={{ data.page - 1 }}&search={{ request.args.get('search', '') }}&category={{ request.args.get('category', '') }}&type={{ request.args.get('type', '') }}">
+                        Previous
+                    </a>
+                </li>
+                {% for p in range(1, data.total_pages + 1) %}
+                    <li class="page-item {% if p == data.page %}active{% endif %}">
+                        <a class="page-link"
+                           href="?page={{ p }}&search={{ request.args.get('search', '') }}&category={{ request.args.get('category', '') }}&type={{ request.args.get('type', '') }}">
+                            {{ p }}
+                        </a>
+                    </li>
+                {% endfor %}
+
+                <li class="page-item {% if data.page >= data.total_pages %}disabled{% endif %}">
+                    <a class="page-link"
+                       href="?page={{ data.page + 1 }}&search={{ request.args.get('search', '') }}&category={{ request.args.get('category', '') }}&type={{ request.args.get('type', '') }}">
+                        Next
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+
+{% endblock %}
