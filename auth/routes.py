@@ -4,6 +4,15 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 
 auth = Blueprint("auth", __name__)
 
+@auth.before_request
+def redirect_if_authenticated():
+    if not request.endpoint:
+        return
+
+    if request.endpoint.endswith(("login", "register")):
+        if "user_id" in session:
+            return redirect(url_for("dashboard.user_dashboard"))
+    
 @auth.route("/login", methods=("GET", "POST"))
 def login():
     if request.method == "POST":
