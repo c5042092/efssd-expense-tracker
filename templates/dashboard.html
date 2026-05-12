@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- STATS -->
+<section class="mt-0">
+    <div class="row g-4">
+        <!-- SAVED THIS MONTH -->
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <small class="text-secondary">Saved this month</small>
+                        <h3 class="fw-bold mt-2 mb-1 text-success">
+                            {{ CURRENCY_SYMBOLS.get(data.currency, data.currency) }}{{ "{:,.2f}".format(data.saved_month) }}
+                        </h3>
+                        <small class="text-secondary">Income − expenses</small>
+                    </div>
+
+                    <div class="icon-box" style="background: rgba(25,135,84,0.12); color: #198754;">
+                        <i class="bi bi-piggy-bank"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXPENSES THIS MONTH -->
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <small class="text-secondary">Spent this month</small>
+                        <h3 class="fw-bold mt-2 mb-1 text-danger">
+                            {{ CURRENCY_SYMBOLS.get(data.currency, data.currency) }}{{ "{:,.2f}".format(data.expense_month) }}
+                        </h3>
+                        <small class="text-secondary">Current month total</small>
+                    </div>
+
+                    <div class="icon-box" style="background: rgba(220,53,69,0.12); color: #dc3545;">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INCOME THIS MONTH -->
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <small class="text-secondary">Income this month</small>
+                        <h3 class="fw-bold mt-2 mb-1 text-success">
+                            {{ CURRENCY_SYMBOLS.get(data.currency, data.currency) }}{{ "{:,.2f}".format(data.income_month) }}
+                        </h3>
+                        <small class="text-secondary">Current month total</small>
+                    </div>
+
+                    <div class="icon-box" style="background: rgba(25,135,84,0.12); color: #198754;">
+                        <i class="bi bi-cash-coin"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AVERAGE MONTHLY SPEND -->
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <small class="text-secondary">Avg monthly spend</small>
+                        <h3 class="fw-bold mt-2 mb-1">
+                            {{ CURRENCY_SYMBOLS.get(data.currency, data.currency) }}{{ "{:,.2f}".format(data.avg_monthly_spend) }}
+                        </h3>
+                        <small class="text-secondary">Historical average</small>
+                    </div>
+
+                    <div class="icon-box" style="background: rgba(13,110,253,0.12); color: #0d6efd;">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="rounded-5 border bg-white p-4 p-md-5 shadow-soft mt-4">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+
+        <div>
+            <h4 class="fw-bold mb-2">Log a transaction</h4>
+            <p class="text-secondary mb-0">Income or expense — keep your insights up to date.</p>
+        </div>
+
+        <a href="/transactions/new" class="btn btn-primary-custom">
+            Add Transaction <i class="bi bi-arrow-right ms-2"></i>
+        </a>
+
+    </div>
+
+</section>
+
+<!-- CATEGORY BREAKDOWN -->
+<section class="mt-4">
+    <div class="rounded-5 border bg-white p-4 shadow-soft">
+        <h4 class="fw-bold mb-1">Category breakdown</h4>
+        <p class="text-secondary small mb-4">Ranked by total spend</p>
+
+        {% if data.category_breakdown %}
+
+            {% for c in data.category_breakdown %}
+                <div class="{% if not loop.last %}mb-4{% endif %}">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold">
+                            {{ c.icon }} {{ c.name }}
+                        </span>
+
+                        <span class="text-secondary">
+                            {{ CURRENCY_SYMBOLS.get(data.currency, data.currency) }}{{ "{:,.2f}".format(c.total) }}
+                        </span>
+                    </div>
+
+                    {# ---------------- COLOR LOGIC ---------------- #}
+                    {% set color = '#0d6efd' %} {# default blue #}
+
+                    {% if loop.index == 1 %}
+                        {% set color = '#dc3545' %} {# highest spend - red #}
+                    {% elif loop.index == 2 %}
+                        {% set color = '#fd7e14' %} {# orange #}
+                    {% elif loop.index == 3 %}
+                        {% set color = '#ffc107' %} {# yellow #}
+                    {% else %}
+                        {% set color = '#28a745' %} {# green for lower values #}
+                    {% endif %}
+
+                    {# ---------------- PROGRESS BAR ---------------- #}
+                    <div class="progress" style="height: 8px;">
+                        <div
+                            class="progress-bar"
+                            role="progressbar"
+                            style="width: {{ c.percentage if c.percentage <= 100 else 100 }}%; background-color: {{ color }};"
+                            aria-valuenow="{{ c.total }}"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                        ></div>
+
+                    </div>
+                </div>
+            {% endfor %}
+
+        {% else %}
+            <div class="text-center py-5 text-secondary">
+                No category data yet
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}
