@@ -4,17 +4,32 @@ from flask_wtf.csrf import generate_csrf
 import os
 from dotenv import load_dotenv
 from auth.routes import auth
+from transactions.routes import transactions_bp
+from dashboard.routes import dashboard
 
 load_dotenv()
 
 app = Flask(__name__)
 app.register_blueprint(auth, url_prefix="/auth")
+app.register_blueprint(transactions_bp, url_prefix="/transactions")
+app.register_blueprint(dashboard, url_prefix="/dashboard")
 
-siteName = "SHU Expense Tracker"
+siteName = "Pennywise"
 # Set the site name in the app context
 @app.context_processor
 def inject_site_name():
     return dict(siteName=siteName)
+
+@app.context_processor
+def inject_currency_symbols():
+    return dict(
+        CURRENCY_SYMBOLS={
+            "GBP": "£",
+            "USD": "$",
+            "EUR": "€",
+            "JPY": "¥"
+        }
+    )
 
 secret = os.getenv("SECRET_KEY")
 app.secret_key = secret
